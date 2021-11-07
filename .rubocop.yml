@@ -14,6 +14,12 @@ Style/FrozenStringLiteralComment:
 Style/StringLiterals:
   EnforcedStyle: double_quotes
 
+Style/SymbolArray:
+  Enabled: false
+
+Style/WordArray:
+  Enabled: false
+
 Metrics/AbcSize:
   Exclude:
     - db/migrate/*.rb
@@ -28,3 +34,6 @@ Metrics/BlockLength:
 
 RSpec/MultipleExpectations:
   Max: 3
+
+RSpec/LetSetup:
+  Enabled: false

@@ -1,0 +1,1 @@
+class QueryArgumentError < RuntimeError; end
