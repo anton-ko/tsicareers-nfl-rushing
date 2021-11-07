@@ -12,12 +12,32 @@ class RushingsController < ApplicationController
                          .call
                          .then { |q| pagination.apply(q) }
 
-    render json: { items: query.to_json, **pagination.meta_params(query) }
+    render json: { items: query.map(&method(:serialize_rushing)), **pagination.meta_params(query) }
   end
 
   private
 
   def pagination
     @pagination ||= Pagination.new(params[:page], params[:per_page])
+  end
+
+  def serialize_rushing(rushing) # rubocop:disable Metrics/MethodLength
+    {
+      player_name: rushing["player_name"],
+      team_abbr: rushing["team_abbr"],
+      pos: rushing["pos"],
+      attempts: rushing["attempts"],
+      attempts_per_game: rushing["attempts_per_game"].to_s,
+      yds: rushing["yds"],
+      avg_yds: rushing["avg_yds"].to_s,
+      yds_per_game: rushing["yds_per_game"],
+      total_touchdowns: rushing["total_touchdowns"],
+      longest: "#{rushing['longest']}#{rushing['longest_t'] ? 'T' : ''}",
+      first_downs: rushing["first_downs"],
+      first_downs_percentage: rushing["first_downs_percentage"].to_s,
+      twenty_plus: rushing["twenty_plus"],
+      forty_plus: rushing["forty_plus"],
+      fumbles: rushing["fumbles"],
+    }
   end
 end

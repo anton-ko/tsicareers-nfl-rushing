@@ -1,5 +1,5 @@
 class Pagination
-  DEFAULT_PER_PAGE = 50
+  DEFAULT_PER_PAGE = 15
   attr_accessor :page, :per_page
 
   def initialize(page, per_page)

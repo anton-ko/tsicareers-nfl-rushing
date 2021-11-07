@@ -1,36 +1,135 @@
 <template>
   <div class="rushings">
-    <div class="justify-center flex bg-blue-100 items-center p-1">
-      <div class="text-4xl">
-        Rushings 🏈
+    <div class="flex flex-col sm:m-6 lg:m-8">
+      <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+        <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
+          <div class="shadow overflow-hidden border-b border-gray-200">
+            <table class="min-w-full divide-y divide-gray-200">
+              <thead class="bg-gray-50">
+              <tr>
+                <th v-for="column in columns"
+                    :key="column.name"
+                    :title="column.title"
+                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  {{ column.heading }}
+                </th>
+              </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr v-for="row in items" :key="row.id">
+                  <td v-for="column in columns"
+                      :key="column.name + row.id"
+                      class="px-6 py-3 text-left text-xs">
+                    {{ row[column.name] }}
+                  </td>
+                </tr>
+              </tbody>
+              <tfoot class="bg-gray-50">
+                <tr>
+                  <th :colspan="columns.length" class="font-normal text-gray-500">
+                    <div class="flex">
+                      <div class="px-3">
+                        <router-link v-show="page > 1" :to="{ query: {...$route.query, page: page - 1}}">
+                          &larr; Previous
+                        </router-link>
+                      </div>
+                      <div class="px-3">
+                        {{ page }} / {{ totalPages }}
+                      </div>
+                      <div class="px-3">
+                        <router-link v-if="page < totalPages" :to="{ query: {...$route.query, page: page + 1}}">
+                          Next &rarr;
+                        </router-link>
+                      </div>
+                    </div>
+                  </th>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import { isEqual } from 'lodash-es'
+
 export default {
   name: 'Rushings',
-  props: {
-    msg: String
+  data() {
+    return {
+      items: [],
+      totalCount: 0,
+      totalPages: 0,
+      loading: false
+    }
+  },
+  computed: {
+    rushingsApiURL() {
+      return 'http://localhost:3000/rushings'
+    },
+    page() {
+      return parseInt(this.$route.query.page) || 1
+    },
+    columns() {
+      return [
+        {name: "player_name", heading: "Player", title: "Player's name"},
+        {name: "team_abbr", heading: "Team", title: "Player's team abbreviation"},
+        {name: "pos", heading: "Pos", title: "Player's postion"},
+        {name: "attempts", heading: "Att/G", title: "Rushing Attempts Per Game Average"},
+        {name: "attempts_per_game", heading: "Att", title: "Rushing Attempts"},
+        {name: "yds", heading: "Yds", title: "Total Rushing Yards", sortable: true},
+        {name: "avg_yds", heading: "Avg", title: "Rushing Average Yards Per Attempt"},
+        {name: "yds_per_game", heading: "Yds/G", title: "Rushing Yards Per Game"},
+        {
+          name: "total_touchdowns",
+          heading: "TD",
+          title: "Total Rushing Touchdowns",
+          sortable: true
+        },
+        {
+          name: "longest",
+          heading: "Lng",
+          title: "Longest Rush -- a T represents a touchdown occurred",
+          sortable: true
+        },
+        {name: "first_downs", heading: "1st", title: "Rushing First Downs"},
+        {name: "first_downs_percentage", heading: "1st%", title: "Rushing First Down Percentage"},
+        {name: "twenty_plus", heading: "20+", title: "Rushing 20+ Yards Each"},
+        {name: "forty_plus", heading: "40+", title: "Rushing 40+ Yards Each"},
+        {name: "fumbles", heading: "FUM", title: "Rushing Fumbles"},
+      ]
+    },
+  },
+  created() {
+    this.fetchDataByRoute(this.$route)
+  },
+  beforeRouteUpdate(to, _from, next) {
+    this.fetchDataByRoute(to).finally(next)
+  },
+  methods: {
+    fetchDataByRoute(route) {
+      this.lastApiQuery = route.query
+      this.loading = true
+      return this.$http
+          .get(this.rushingsApiURL, { params: route.query })
+          .then((response) => {
+            if (isEqual(this.lastApiQuery, response.config.params)) {
+              console.log(response)
+              this.handleDataResponse(response.data, route.query)
+            }
+          })
+          .finally(() => this.loading = false)
+    },
+    handleDataResponse(data, query) {
+      this.items = data.items
+      this.totalCount = data.total_count
+      this.totalPages = data.total_pages
+
+      console.log(data, query)
+    }
   }
 }
 </script>
-
-<!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
-h3 {
-  margin: 40px 0 0;
-}
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
-a {
-  color: #42b983;
-}
-</style>
