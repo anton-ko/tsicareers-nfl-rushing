@@ -195,7 +195,7 @@ export default {
     applyFilter(query) {
       debounce(
         () => {
-          this.$router.push({ query: { query: query }})
+         this.$router.push({ query: {...query && { query: query} }})
         },
         200)()
     }
