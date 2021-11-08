@@ -3,15 +3,39 @@
     <div class="flex flex-col sm:m-6 lg:m-8">
       <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
         <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
-          <div class="shadow overflow-hidden border-b border-gray-200">
+          <div class="shadow overflow-hidden border-b border-gray-200 bg-gray-200">
+            <div class="mx-6 my-3">
+              Filter
+              <input v-model="inputQuery"
+                     type="text"
+                     placeholder="Player name"
+                     class="p-1 ml-1"
+              />
+            </div>
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
               <tr>
                 <th v-for="column in columns"
                     :key="column.name"
                     :title="column.title"
-                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {{ column.heading }}
+                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">
+                  <div v-if="column.sortable">
+                    <router-link :to="sortLink(column.name)" :class="[sortColumn === column.name ? 'font-bold' : '']">
+                      {{ column.heading }}
+
+                      <span>
+                        <span :class="[sortColumn === column.name && sortOrder === 'asc' ? 'text-black' : 'text-gray-500']">
+                          &uarr;
+                        </span>
+                        <span :class="[sortColumn === column.name && sortOrder === 'desc' ? 'text-black' : 'text-gray-500']">
+                          &darr;
+                        </span>
+                      </span>
+                    </router-link>
+                  </div>
+                  <span v-else>
+                      {{ column.heading }}
+                  </span>
                 </th>
               </tr>
               </thead>
@@ -20,16 +44,20 @@
                   <td v-for="column in columns"
                       :key="column.name + row.id"
                       class="px-6 py-3 text-left text-xs">
-                    {{ row[column.name] }}
+
+                    <div v-if="loading" :class="[column.name === 'player_name' ? 'w-24' : 'w-10','animate-pulse','bg-gray-100', 'h-4']"></div>
+                    <span v-else>
+                      {{ row[column.name] }}
+                    </span>
                   </td>
                 </tr>
               </tbody>
               <tfoot class="bg-gray-50">
                 <tr>
                   <th :colspan="columns.length" class="font-normal text-gray-500">
-                    <div class="flex">
+                    <div class="flex justify-center">
                       <div class="px-3">
-                        <router-link v-show="page > 1" :to="{ query: {...$route.query, page: page - 1}}">
+                        <router-link :class="[page > 1 ? '' : 'opacity-0']" :to="{ query: {...$route.query, page: page - 1}}">
                           &larr; Previous
                         </router-link>
                       </div>
@@ -37,7 +65,7 @@
                         {{ page }} / {{ totalPages }}
                       </div>
                       <div class="px-3">
-                        <router-link v-if="page < totalPages" :to="{ query: {...$route.query, page: page + 1}}">
+                        <router-link :class="[page < totalPages ? '' : 'opacity-0']" :to="{ query: {...$route.query, page: page + 1}}">
                           Next &rarr;
                         </router-link>
                       </div>
@@ -54,7 +82,7 @@
 </template>
 
 <script>
-import { isEqual } from 'lodash-es'
+import { isEqual, debounce } from 'lodash-es'
 
 export default {
   name: 'Rushings',
@@ -63,7 +91,8 @@ export default {
       items: [],
       totalCount: 0,
       totalPages: 0,
-      loading: false
+      loading: false,
+      inputQuery: '',
     }
   },
   computed: {
@@ -72,6 +101,15 @@ export default {
     },
     page() {
       return parseInt(this.$route.query.page) || 1
+    },
+    sortColumn() {
+      return this.$route.query.sort_field
+    },
+    sortOrder() {
+      return this.$route.query.sort_order
+    },
+    filterQuery() {
+      return this.$route.query.query
     },
     columns() {
       return [
@@ -104,10 +142,16 @@ export default {
     },
   },
   created() {
+    this.inputQuery = this.filterQuery
     this.fetchDataByRoute(this.$route)
   },
   beforeRouteUpdate(to, _from, next) {
     this.fetchDataByRoute(to).finally(next)
+  },
+  watch: {
+    inputQuery: function(newQuery) {
+      this.applyFilter(newQuery)
+    }
   },
   methods: {
     fetchDataByRoute(route) {
@@ -129,6 +173,21 @@ export default {
       this.totalPages = data.total_pages
 
       console.log(data, query)
+    },
+    sortLink(field) {
+      let newOrder = "desc"
+      if (field === this.sortColumn) {
+        newOrder = this.sortOrder === "desc" ? "asc" : "desc"
+      }
+
+      return { query: { query: this.filterQuery, sort_field: field, sort_order: newOrder } }
+    },
+    applyFilter(query) {
+      debounce(
+        () => {
+          this.$router.push({ query: { query: query }})
+        },
+        200)()
     }
   }
 }
