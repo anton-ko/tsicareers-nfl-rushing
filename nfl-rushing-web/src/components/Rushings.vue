@@ -4,13 +4,19 @@
       <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
         <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
           <div class="shadow overflow-hidden border-b border-gray-200 bg-gray-200">
-            <div class="mx-6 my-3">
-              Filter
-              <input v-model="inputQuery"
-                     type="text"
-                     placeholder="Player name"
-                     class="p-1 ml-1"
-              />
+            <div class="mx-6 my-3 flex justify-between">
+              <div>
+                <label for="inputQuery">Filter</label>
+                <input v-model="inputQuery"
+                       id="inputQuery"
+                       type="text"
+                       placeholder="Player name"
+                       class="p-1 ml-1"
+                />
+              </div>
+              <div>
+                <a :href="downloadLink" class="underline">Download CSV</a>
+              </div>
             </div>
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
@@ -82,7 +88,7 @@
 </template>
 
 <script>
-import { isEqual, debounce } from 'lodash-es'
+import { isEqual, debounce, omit } from 'lodash-es'
 
 export default {
   name: 'Rushings',
@@ -110,6 +116,13 @@ export default {
     },
     filterQuery() {
       return this.$route.query.query
+    },
+    downloadLink() {
+      // in a real-world app, the backend would ship the file to a storage like AWS S3 and provide a download link
+      // streaming directly from the backend for now
+      const queryParams = new URLSearchParams(omit({...this.$route.query}, ['page']))
+
+      return `http://localhost:3000/rushings/export?${queryParams.toString()}`
     },
     columns() {
       return [
@@ -161,18 +174,15 @@ export default {
           .get(this.rushingsApiURL, { params: route.query })
           .then((response) => {
             if (isEqual(this.lastApiQuery, response.config.params)) {
-              console.log(response)
-              this.handleDataResponse(response.data, route.query)
+              this.handleDataResponse(response.data)
             }
           })
           .finally(() => this.loading = false)
     },
-    handleDataResponse(data, query) {
+    handleDataResponse(data) {
       this.items = data.items
       this.totalCount = data.total_count
       this.totalPages = data.total_pages
-
-      console.log(data, query)
     },
     sortLink(field) {
       let newOrder = "desc"

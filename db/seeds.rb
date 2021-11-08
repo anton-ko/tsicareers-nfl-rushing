@@ -9,4 +9,4 @@
 # This is fine for a file of this size, switch to streaming input for larger files
 rushings_data = JSON.parse(File.read(Rails.root.join("rushing.json")))
 imported = Import::RushingsImporter.import_list(rushings_data)
-Rails.logger.info("Imported #{imported.size} rushing records from rushing.json")
+puts "Imported #{imported.size} rushing records from rushing.json" # rubocop:disable Rails/Output

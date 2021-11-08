@@ -15,6 +15,16 @@ class RushingsController < ApplicationController
     render json: { items: query.map(&method(:serialize_rushing)), **pagination.meta_params(query) }
   end
 
+  def export
+    items = RushingsQuery.new
+                         .filter(params[:query])
+                         .sort(*params.values_at(:sort_field, :sort_order))
+                         .call
+    send_data Export::RushingsCsv.new(items).csv,
+              type: "text/csv; charset=utf-8; header=present",
+              disposition: "attachment; filename=rushings.csv"
+  end
+
   private
 
   def pagination
@@ -37,7 +47,7 @@ class RushingsController < ApplicationController
       first_downs_percentage: rushing["first_downs_percentage"].to_s,
       twenty_plus: rushing["twenty_plus"],
       forty_plus: rushing["forty_plus"],
-      fumbles: rushing["fumbles"],
+      fumbles: rushing["fumbles"]
     }
   end
 end
