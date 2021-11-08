@@ -54,4 +54,29 @@ We will evaluate you on your ability to solve the problem defined in the require
 If you have any questions regarding requirements, do not hesitate to email your contact at theScore for clarification.
 
 ### Installation and running this solution
-... TODO
+
+This app runs Rails as a backend and Vue.js app as a front-end.
+Data is imported into SQLite to reduce dependencies.
+
+You will need [Ruby 2.7.4](https://github.com/rbenv/rbenv#installation) and [yarn](https://classic.yarnpkg.com/en/docs/install#mac-stable) installed.
+
+Setup the database and import data with:
+```
+ bundle exec rails db:setup db:seed
+```
+
+Run both processes with foreman if you have it:
+```
+foreman start -f Procfile.development
+```
+
+Alternatively, run servers manually:
+```
+bundle exec rails s & sh -c 'cd ./nfl-rushing-web/ && yarn serve'
+```
+
+App should be running at http://localhost:8080/
+
+#### Notes
+
+If given more time, I would write more tests.
